@@ -25,6 +25,7 @@ getOrganisations =
 
 type alias Model =
     { organisations : List Organisation
+    , chosenOrganisation : Maybe Organisation
     , newOrgName : String
     , newOrgShortName : String
     }
@@ -32,7 +33,11 @@ type alias Model =
 
 initialModel : Model
 initialModel =
-    { organisations = [], newOrgName = "", newOrgShortName = "" }
+    { organisations = []
+    , chosenOrganisation = Nothing
+    , newOrgName = ""
+    , newOrgShortName = ""
+    }
 
 
 init : ( Model, Cmd Msg )
@@ -50,6 +55,7 @@ type Msg
     | ShortNameInput String
     | SubmitNewOrganisation
     | SubmitResult (Result Http.Error Organisation)
+    | ChooseOrganisation Organisation
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -76,6 +82,9 @@ update msg model =
         SubmitResult (Ok org) ->
             model ! [ getOrganisations ]
 
+        ChooseOrganisation organisation ->
+            { model | chosenOrganisation = Just organisation } ! []
+
 
 submitNewOrganisation : Model -> Cmd Msg
 submitNewOrganisation model =
@@ -98,8 +107,14 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
+    let
+        title =
+            model.chosenOrganisation
+                |> Maybe.map (\o -> " – " ++ o.name)
+                |> Maybe.withDefault ""
+    in
     div []
-        [ h1 [] [ text "Ro i salen" ]
+        [ h1 [] [ "Ro i salen" ++ title |> text ]
         , viewOrganisations model.organisations
         , newOrganisation model
         , footer
@@ -133,7 +148,7 @@ viewOrganisations : List Organisation -> Html Msg
 viewOrganisations orgs =
     let
         view org =
-            p [] [ text org.name ]
+            p [] [ button [ onClick (ChooseOrganisation org) ] [ text org.name ] ]
     in
     orgs
         |> List.map view
