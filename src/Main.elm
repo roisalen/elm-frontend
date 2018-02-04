@@ -23,8 +23,15 @@ getOrganisations =
         |> Http.send OrganisationResult
 
 
+getSpeakers : Organisation -> Cmd Msg
+getSpeakers organisation =
+    ServerComm.getSpeakers organisation
+        |> Http.send (SpeakersResult organisation)
+
+
 type alias Model =
     { organisations : List Organisation
+    , speakers : List Speaker
     , chosenOrganisation : Maybe Organisation
     , newOrgName : String
     , newOrgShortName : String
@@ -35,6 +42,7 @@ type alias Model =
 initialModel : Model
 initialModel =
     { organisations = []
+    , speakers = []
     , chosenOrganisation = Nothing
     , newOrgName = ""
     , newOrgShortName = ""
@@ -47,12 +55,9 @@ init =
     ( initialModel, getOrganisations )
 
 
-
--- UPDATE
-
-
 type Msg
     = OrganisationResult (Result Http.Error (List Organisation))
+    | SpeakersResult Organisation (Result Http.Error (List Speaker))
     | OrgNameInput String
     | ShortNameInput String
     | SubmitNewOrganisation
@@ -78,6 +83,12 @@ update msg model =
         OrganisationResult (Ok orgs) ->
             { model | organisations = orgs } ! []
 
+        SpeakersResult organisation (Err _) ->
+            model ! []
+
+        SpeakersResult organisation (Ok speakers) ->
+            { model | speakers = speakers } ! []
+
         OrgNameInput name ->
             { model | newOrgName = name } ! []
 
@@ -97,7 +108,18 @@ update msg model =
             { model | chosenOrganisation = Just organisation, page = Speakerlist } ! []
 
         SelectPage page ->
-            { model | page = page } ! []
+            let
+                c =
+                    case page of
+                        LeadMeeting ->
+                            model.chosenOrganisation
+                                |> Maybe.map getSpeakers
+                                |> Maybe.withDefault Cmd.none
+
+                        _ ->
+                            Cmd.none
+            in
+            { model | page = page } ! [ c ]
 
 
 submitNewOrganisation : Model -> Cmd Msg
@@ -106,17 +128,9 @@ submitNewOrganisation model =
         |> Http.send SubmitResult
 
 
-
--- SUBSCRIPTIONS
-
-
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.none
-
-
-
--- VIEW
 
 
 view : Model -> Html Msg
@@ -145,7 +159,7 @@ view model =
                 h2 [] [ text "Registrerte representanter" ]
 
             LeadMeeting ->
-                h2 [] [ text "Led møtet" ]
+                viewLeadMeeting model
 
             Statistics ->
                 h2 [] [ text "Dagens statistikk" ]
@@ -217,3 +231,51 @@ footer =
                   Ønsker om funksjonalitet og spesialtilpasning kan sendes til torkilv(a)gmail.com"""
             ]
         ]
+
+
+viewLeadMeeting : Model -> Html Msg
+viewLeadMeeting model =
+    div []
+        [ div [] [ label [] [ text "Sakstittel" ], input [ placeholder "Skriv inn sakstittel…" ] [] ]
+        , div [] [ label [] [ text "Legg til / Neste taler" ], input [ placeholder "Ny taler: Skriv talenummer. Replikk: Skriv r+talenummer. Neste taler/replikk: Trykk enter i tomt felt" ] [] ]
+        , div [] [ text "TODO Add timer here" ]
+        , div [] [ label [] [ text "Beskjeder og info" ], textarea [] [] ]
+        , div [] [ viewSpeakers model.speakers ]
+        , viewRepresentants model
+        ]
+
+
+viewSpeakers : List Speaker -> Html Msg
+viewSpeakers speakers =
+    speakers
+        |> List.concatMap viewSpeaker
+        |> table []
+
+
+viewSpeaker : Speaker -> List (Html Msg)
+viewSpeaker speaker =
+    let
+        row id name group isReply =
+            tr []
+                [ td []
+                    [ (if isReply then
+                        "->"
+                       else
+                        ""
+                      )
+                        ++ (id |> toString)
+                        |> text
+                    ]
+                , td [] [ text name ]
+                , td [] [ text group ]
+                ]
+    in
+    row speaker.id speaker.name speaker.group False
+        :: (speaker.replies
+                |> List.map (\r -> row r.id r.name r.group True)
+           )
+
+
+viewRepresentants : Model -> Html Msg
+viewRepresentants model =
+    h2 [] [ text "Registrerte representanter" ]
