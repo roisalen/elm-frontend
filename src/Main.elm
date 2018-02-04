@@ -28,6 +28,7 @@ type alias Model =
     , chosenOrganisation : Maybe Organisation
     , newOrgName : String
     , newOrgShortName : String
+    , page : Page
     }
 
 
@@ -37,6 +38,7 @@ initialModel =
     , chosenOrganisation = Nothing
     , newOrgName = ""
     , newOrgShortName = ""
+    , page = LandingPage
     }
 
 
@@ -56,6 +58,15 @@ type Msg
     | SubmitNewOrganisation
     | SubmitResult (Result Http.Error Organisation)
     | ChooseOrganisation Organisation
+    | SelectPage Page
+
+
+type Page
+    = LandingPage
+    | Speakerlist
+    | AdminRepresentants
+    | LeadMeeting
+    | Statistics
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -83,7 +94,10 @@ update msg model =
             model ! [ getOrganisations ]
 
         ChooseOrganisation organisation ->
-            { model | chosenOrganisation = Just organisation } ! []
+            { model | chosenOrganisation = Just organisation, page = Speakerlist } ! []
+
+        SelectPage page ->
+            { model | page = page } ! []
 
 
 submitNewOrganisation : Model -> Cmd Msg
@@ -115,9 +129,26 @@ view model =
     in
     div []
         [ h1 [] [ "Ro i salen" ++ title |> text ]
-        , viewOrganisations model.organisations
-        , newOrganisation model
-        , footer
+        , navigationBar model.page
+        , case model.page of
+            LandingPage ->
+                div []
+                    [ viewOrganisations model.organisations
+                    , newOrganisation model
+                    , footer
+                    ]
+
+            Speakerlist ->
+                h2 [] [ text "Taleliste" ]
+
+            AdminRepresentants ->
+                h2 [] [ text "Registrerte representanter" ]
+
+            LeadMeeting ->
+                h2 [] [ text "Led møtet" ]
+
+            Statistics ->
+                h2 [] [ text "Dagens statistikk" ]
         ]
 
 
@@ -153,6 +184,16 @@ viewOrganisations orgs =
     orgs
         |> List.map view
         |> div []
+
+
+navigationBar : Page -> Html Msg
+navigationBar selectedPage =
+    div []
+        [ button [ onClick (SelectPage Speakerlist) ] [ text "Taleliste" ]
+        , button [ onClick (SelectPage AdminRepresentants) ] [ text "Administrér representanter" ]
+        , button [ onClick (SelectPage LeadMeeting) ] [ text "Styr ordet" ]
+        , button [ onClick (SelectPage Statistics) ] [ text "Dagens statistikk" ]
+        ]
 
 
 footer : Html m
