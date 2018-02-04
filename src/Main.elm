@@ -154,11 +154,10 @@ footer =
         , p []
             [ text """
                 Roisalen er laget på fritida av tre aktive organisasjonsmennesker:
-                Christian Strandenæs, Stian Lågstad og Torkil Vederhus.
+                Christian Strandenæs, Stian Lågstad, Runar Furenes og Torkil Vederhus.
                 All kildekode er åpent tilgjengelig på """
             , a [ href "" ] [ text "GitHub" ]
-            , text """
-                , bidra gjerne selv!
+            , text """, bidra gjerne selv!
                   Ønsker om funksjonalitet og spesialtilpasning kan sendes til torkilv(a)gmail.com"""
             ]
         ]
