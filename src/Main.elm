@@ -127,7 +127,7 @@ update msg model =
                         _ ->
                             Cmd.none
             in
-                { model | page = page } ! [ c ]
+            { model | page = page } ! [ c ]
 
 
 submitNewOrganisation : Model -> Cmd Msg
@@ -149,29 +149,29 @@ view model =
                 |> Maybe.map (\o -> " – " ++ o.name)
                 |> Maybe.withDefault ""
     in
-        div []
-            [ h1 [] [ "Ro i salen" ++ title |> text ]
-            , navigationBar model.page
-            , case model.page of
-                LandingPage ->
-                    div []
-                        [ viewOrganisations model.organisations
-                        , newOrganisation model
-                        , footer
-                        ]
+    div []
+        [ h1 [] [ "Ro i salen" ++ title |> text ]
+        , navigationBar model.page
+        , case model.page of
+            LandingPage ->
+                div []
+                    [ viewOrganisations model.organisations
+                    , newOrganisation model
+                    , footer
+                    ]
 
-                Speakerlist ->
-                    viewSpeakerlist model
+            Speakerlist ->
+                viewSpeakerlist model
 
-                AdminRepresentants ->
-                    h2 [] [ text "Registrerte representanter" ]
+            AdminRepresentants ->
+                h2 [] [ text "Registrerte representanter" ]
 
-                LeadMeeting ->
-                    viewLeadMeeting model
+            LeadMeeting ->
+                viewLeadMeeting model
 
-                Statistics ->
-                    h2 [] [ text "Dagens statistikk" ]
-            ]
+            Statistics ->
+                h2 [] [ text "Dagens statistikk" ]
+        ]
 
 
 newOrganisation : Model -> Html Msg
@@ -204,12 +204,12 @@ viewOrganisations orgs =
         view org =
             p [] [ button [ onClick (ChooseOrganisation org) ] [ text org.name ] ]
     in
-        div []
-            [ h2 [] [ text "Velg organisasjon" ]
-            , orgs
-                |> List.map view
-                |> div []
-            ]
+    div []
+        [ h2 [] [ text "Velg organisasjon" ]
+        , orgs
+            |> List.map view
+            |> div []
+        ]
 
 
 navigationBar : Page -> Html Msg
@@ -289,10 +289,10 @@ viewSpeaker speaker =
                 , td [] [ text group ]
                 ]
     in
-        row speaker.id speaker.name speaker.group False
-            :: (speaker.replies
-                    |> List.map (\r -> row r.id r.name r.group True)
-               )
+    row speaker.id speaker.name speaker.group False
+        :: (speaker.replies
+                |> List.map (\r -> row r.id r.name r.group True)
+           )
 
 
 viewRepresentants : Model -> Html Msg
