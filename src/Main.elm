@@ -66,7 +66,9 @@ type Msg
     | SelectPage Page
 
 
-type Page
+type
+    Page
+    -- todo: one shouldn't be able to go to these pages before having selected an organisation
     = LandingPage
     | Speakerlist
     | AdminRepresentants
@@ -105,6 +107,7 @@ update msg model =
             model ! [ getOrganisations ]
 
         ChooseOrganisation organisation ->
+            -- todo: make sure speakerlist gets updated when forwarded there
             { model | chosenOrganisation = Just organisation, page = Speakerlist } ! []
 
         SelectPage page ->
@@ -112,6 +115,11 @@ update msg model =
                 c =
                     case page of
                         LeadMeeting ->
+                            model.chosenOrganisation
+                                |> Maybe.map getSpeakers
+                                |> Maybe.withDefault Cmd.none
+
+                        Speakerlist ->
                             model.chosenOrganisation
                                 |> Maybe.map getSpeakers
                                 |> Maybe.withDefault Cmd.none
@@ -153,7 +161,7 @@ view model =
                     ]
 
             Speakerlist ->
-                h2 [] [ text "Taleliste" ]
+                viewSpeakerlist model
 
             AdminRepresentants ->
                 h2 [] [ text "Registrerte representanter" ]
@@ -169,7 +177,8 @@ view model =
 newOrganisation : Model -> Html Msg
 newOrganisation model =
     div []
-        [ div []
+        [ h2 [] [ text "Legg til en ny organisasjon" ]
+        , div []
             [ input
                 [ onInput OrgNameInput
                 , placeholder "Navn på organisasjon"
@@ -195,9 +204,12 @@ viewOrganisations orgs =
         view org =
             p [] [ button [ onClick (ChooseOrganisation org) ] [ text org.name ] ]
     in
-    orgs
-        |> List.map view
-        |> div []
+    div []
+        [ h2 [] [ text "Velg organisasjon" ]
+        , orgs
+            |> List.map view
+            |> div []
+        ]
 
 
 navigationBar : Page -> Html Msg
@@ -207,13 +219,15 @@ navigationBar selectedPage =
         , button [ onClick (SelectPage AdminRepresentants) ] [ text "Administrér representanter" ]
         , button [ onClick (SelectPage LeadMeeting) ] [ text "Styr ordet" ]
         , button [ onClick (SelectPage Statistics) ] [ text "Dagens statistikk" ]
+        , hr [] []
         ]
 
 
 footer : Html m
 footer =
     div []
-        [ h2 [] [ text "Om Roisalen" ]
+        [ hr [] []
+        , h2 [] [ text "Om Roisalen" ]
         , p [] [ text "Vi prøver å lage enkle digitale verktøy for å gjøre store møter bedre. Foreløpig har vi laget verktøy som:" ]
         , ul []
             [ li [] [ text "Holder styr på talelista for deg" ]
@@ -222,21 +236,26 @@ footer =
             , li [] [ text "Viser sakstittel og dele beskjeder med salen" ]
             ]
         , p []
-            [ text """
-                Roisalen er laget på fritida av tre aktive organisasjonsmennesker:
-                Christian Strandenæs, Stian Lågstad, Runar Furenes og Torkil Vederhus.
-                All kildekode er åpent tilgjengelig på """
+            [ text "Roisalen er laget på fritida av Christian Strandenæs, Stian Lågstad, Runar Furenes og Torkil Vederhus. All kildekode er åpent tilgjengelig på "
             , a [ href "" ] [ text "GitHub" ]
-            , text """, bidra gjerne selv!
-                  Ønsker om funksjonalitet og spesialtilpasning kan sendes til torkilv(a)gmail.com"""
+            , text ", bidra gjerne selv! Ønsker om funksjonalitet og spesialtilpasning kan sendes til torkilv(a)gmail.com"
             ]
+        ]
+
+
+viewSpeakerlist : Model -> Html Msg
+viewSpeakerlist model =
+    div []
+        [ h1 [] [ text "Taleliste" ]
+        , viewSpeakers model.speakers
         ]
 
 
 viewLeadMeeting : Model -> Html Msg
 viewLeadMeeting model =
     div []
-        [ div [] [ label [] [ text "Sakstittel" ], input [ placeholder "Skriv inn sakstittel…" ] [] ]
+        [ h2 [] [ text "Styr ordet" ]
+        , div [] [ label [] [ text "Sakstittel" ], input [ placeholder "Skriv inn sakstittel…" ] [] ]
         , div [] [ label [] [ text "Legg til / Neste taler" ], input [ placeholder "Ny taler: Skriv talenummer. Replikk: Skriv r+talenummer. Neste taler/replikk: Trykk enter i tomt felt" ] [] ]
         , div [] [ text "TODO Add timer here" ]
         , div [] [ label [] [ text "Beskjeder og info" ], textarea [] [] ]
